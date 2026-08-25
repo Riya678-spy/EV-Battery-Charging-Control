@@ -181,15 +181,6 @@ For the final GitHub version, the following simulation plots/screenshots can be 
 4. **SOC vs. Time**
 5. **Relay/Control Signal vs. Time**
 
-Example:
-
-```text
-Battery Voltage → approaches 4.2 V
-Charging Current → initially ~10 A
-SOC              → increases from 20%
-Control Signal   → changes state near voltage limit
-```
-
 ---
 
 ## 🧠 Key Learning Outcomes
@@ -224,24 +215,6 @@ The concepts demonstrated in this project are applicable to:
 * Renewable energy storage systems
 
 The model can be further extended from a single battery cell to a complete EV battery pack and a more advanced charging system.
-
----
-
-## 🔮 Future Improvements
-
-The project can be further improved by adding:
-
-* A dedicated constant-voltage control loop
-* PID-based charging-current control
-* SOC estimation
-* Battery temperature monitoring
-* Over-current protection
-* Over-voltage protection
-* Battery pack modeling
-* State-of-Health (SOH) estimation
-* Charging efficiency calculation
-* Real-time battery parameter monitoring
-* EV charging-station integration
 
 ---
 
