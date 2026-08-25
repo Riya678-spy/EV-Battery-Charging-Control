@@ -4,47 +4,78 @@
 
 This project presents the design and simulation of a **lithium-ion EV battery charging control system** using **MATLAB/Simulink and Simscape Electrical**.
 
-The model demonstrates the **Constant Current–Constant Voltage (CC-CV)** charging concept. The battery is initially charged with a constant current, while its terminal voltage is continuously monitored. When the battery voltage approaches the maximum charging voltage, the control logic changes the charging state to prevent overcharging.
+The model demonstrates a simplified **Constant Current (CC) charging strategy with voltage-based cutoff control**. The battery is initially charged at a constant current of **10 A** while its terminal voltage and State of Charge (SOC) are continuously monitored.
 
-The project uses a **closed-loop voltage feedback system** with relay-based hysteresis to achieve stable switching during the charging process.
+When the battery terminal voltage reaches the defined maximum charging voltage of **4.20 V**, the control logic switches the charging current to **0 A**. After the charging current is removed, the battery voltage settles to approximately **4.10 V**, representing its open-circuit steady-state voltage.
+
+A **relay with hysteresis** is used to control the charging current and prevent unwanted rapid switching around the voltage threshold.
 
 ---
 
 ## 🎯 Objectives
 
-* Model a lithium-ion battery cell using Simscape Electrical.
-* Implement a basic CC-CV charging strategy.
-* Measure battery voltage and charging current.
-* Develop a closed-loop charging control system.
-* Control the charging current based on battery voltage.
-* Prevent the battery voltage from exceeding the defined limit.
-* Reduce switching chattering using hysteresis control.
-* Understand the basic control principles used in EV battery charging systems.
+* Model a lithium-ion battery using Simscape Electrical.
+* Implement a constant-current battery charging system.
+* Measure battery terminal voltage and charging current.
+* Monitor battery State of Charge (SOC).
+* Develop a closed-loop voltage-based charging controller.
+* Automatically stop charging when the battery reaches **4.20 V**.
+* Use relay hysteresis to provide stable switching.
+* Understand the basic feedback-control principle used in EV battery charging systems.
+* Handle the algebraic loop present in the feedback control path.
 
 ---
 
-## ⚡ CC-CV Charging Strategy
+## ⚡ Charging Strategy
 
-The charging process is divided into two main stages.
+The model uses a simplified **constant-current charging with voltage cutoff** approach.
 
-### 1. Constant Current (CC) Mode
+### 1. Constant Current Charging
 
-During the initial stage, the battery is charged using a fixed current.
+At the beginning of the simulation, the battery starts at **20% SOC**.
 
-* **Charging current:** 10 A
-* **Initial SOC:** 20%
-* Battery voltage is below the maximum voltage limit.
-* The controller maintains the charging current while the battery voltage is below the defined threshold.
+The controlled current source supplies approximately **10 A** to the battery.
 
-### 2. Constant Voltage (CV) Mode
+During this stage:
 
-As the battery voltage approaches its maximum charging voltage, the controller changes the charging command.
+* Initial SOC = **20%**
+* Charging current = **10 A**
+* Battery voltage gradually increases.
+* The voltage sensor continuously measures the battery terminal voltage.
+* The measured voltage is fed back to the control logic.
 
-* **Maximum battery voltage:** 4.2 V
-* Charging current is reduced or switched OFF when the voltage reaches the defined limit.
-* This prevents the battery from being continuously charged beyond its voltage limit.
+Because of the direction of the controlled current source in the model, the current sensor displays the charging current as approximately **-10 A**. The negative sign represents the chosen reference direction of the current sensor and does **not** mean that the battery is discharging.
 
-> **Note:** This project uses a simplified voltage-based control strategy to demonstrate the CC-CV concept. A practical EV charger would normally use a dedicated current-control loop together with a Battery Management System (BMS).
+### 2. Voltage Cutoff
+
+As charging continues, the battery voltage increases until it reaches the maximum charging voltage of:
+
+**4.20 V**
+
+At approximately:
+
+**t ≈ 280 seconds**
+
+the battery reaches the voltage cutoff condition.
+
+The relay then changes its output, causing the controlled current source to switch from the charging state to:
+
+**0 A**
+
+This stops further charging and prevents the battery voltage from continuously increasing.
+
+### 3. Post-Cutoff Behavior
+
+After the charging current is switched OFF:
+
+* Charging current drops to **0 A**.
+* Battery voltage falls slightly from **4.20 V**.
+* The terminal voltage settles at approximately **4.10 V**.
+* SOC reaches approximately **93%**.
+
+The voltage settling occurs because the battery is no longer being actively charged and its terminal voltage moves toward its open-circuit steady-state value.
+
+> **Note:** This is a simplified educational charging model. A practical EV charging system would normally use dedicated current and voltage control loops together with a Battery Management System (BMS).
 
 ---
 
@@ -53,9 +84,10 @@ As the battery voltage approaches its maximum charging voltage, the controller c
 * **MATLAB**
 * **Simulink**
 * **Simscape Electrical**
-* Battery modeling
+* Lithium-ion battery modeling
 * Feedback control
 * Relay-based hysteresis control
+* Voltage and current sensing
 
 ---
 
@@ -63,148 +95,333 @@ As the battery voltage approaches its maximum charging voltage, the controller c
 
 The Simulink/Simscape model consists of the following major components:
 
-* **Battery (Table-Based):** Represents the lithium-ion battery cell and its electrical behavior.
-* **Controlled Current Source:** Supplies the charging current to the battery.
-* **Voltage Sensor:** Measures the battery terminal voltage and provides feedback.
-* **Current Sensor:** Measures the charging current for monitoring.
-* **Electrical Reference:** Provides the electrical ground/reference for the Simscape circuit.
-* **Solver Configuration:** Provides the required configuration for the Simscape electrical network.
-* **PS-Simulink Converter:** Converts Simscape physical signals into Simulink signals.
-* **Simulink-PS Converter:** Converts Simulink control signals into Simscape physical signals.
-* **Relay:** Controls the charging state using voltage thresholds and hysteresis.
-* **Memory Block:** Helps break the algebraic loop in the feedback path.
-* **Scope:** Displays battery voltage and charging current during simulation.
+### Battery (Table-Based)
+
+Represents the lithium-ion battery and its electrical behavior. The battery starts at approximately **20% SOC**.
+
+### Controlled Current Source
+
+Provides the charging current to the battery.
+
+The current source is configured with its current arrow pointing **upward**, so a positive control command produces the required charging direction.
+
+### Voltage Sensor
+
+Measures the battery terminal voltage and sends the physical signal to the control system.
+
+### Current Sensor
+
+Measures the charging current for monitoring and visualization.
+
+### PS-Simulink Converter
+
+Converts the physical signal from the Simscape voltage/current sensors into a Simulink signal that can be processed by the control logic.
+
+### Relay
+
+Acts as the main voltage-based charging controller. It switches the charging current between the charging state and zero-current state according to the battery voltage.
+
+### Simulink-PS Converter
+
+Converts the relay's Simulink output back into a physical signal that controls the Simscape controlled current source.
+
+### Electrical Reference
+
+Provides the electrical reference/ground for the Simscape electrical network.
+
+### Solver Configuration
+
+Provides the required solver configuration for the Simscape physical network.
+
+### Memory Block
+
+Introduces a delay into the feedback path to help break the algebraic loop between the battery measurement and controlled current source.
+
+### Scope
+
+Displays the main simulation results:
+
+* Battery voltage
+* Charging current
+* State of Charge (SOC)
 
 ---
 
-## 🔄 How the Model Works
-
-The battery is initially set to **20% SOC** and is connected to a controlled current source.
-
-The battery voltage is continuously measured using a voltage sensor. This physical signal is converted into a Simulink signal and passed to the control logic.
-
-The controller compares the measured battery voltage with the defined voltage thresholds. Based on the result, the relay determines whether the charging current should remain ON or be switched OFF.
-
-### Control Flow
+## 🔄 Control Flow
 
 ```text
-Battery
-   ↓
-Voltage Sensor
-   ↓
-PS-Simulink Converter
-   ↓
-Voltage Control Logic
-   ↓
-Relay with Hysteresis
-   ↓
-Simulink-PS Converter
-   ↓
-Controlled Current Source
-   ↓
-Battery
+              ┌──────────────────────┐
+              │       Battery        │
+              └──────────┬───────────┘
+                         │
+                         ▼
+                  Voltage Sensor
+                         │
+                         ▼
+                PS-Simulink Converter
+                         │
+                         ▼
+                  Relay Controller
+                  with Hysteresis
+                         │
+                         ▼
+                 Simulink-PS Converter
+                         │
+                         ▼
+              Controlled Current Source
+                         │
+                         ▼
+                      Battery
 ```
 
-This creates a **closed-loop control system**, where the battery voltage is continuously measured and used to determine the charging command.
+This forms a **closed-loop voltage feedback system**.
+
+The battery voltage is continuously measured and used to determine whether the charging current should remain ON or be switched OFF.
 
 ---
 
-## ⚙️ Control Parameters
+# ⚙️ Updated Control Parameters
 
-* **Initial SOC:** 20%
-* **Maximum Battery Voltage:** 4.2 V
-* **Charging Current:** 10 A
-* **Charging Current at Voltage Limit:** 0 A
-* **Relay ON Point:** 4.19 V
-* **Relay OFF Point:** 4.20 V
-
-These parameters were selected to make the charging behavior and controller response clearly observable during simulation.
-
----
-
-## 🔁 Switching Problem and Hysteresis
-
-During the initial implementation, the charging logic was created using a **Relational Operator and Switch**.
-
-Although this approach works away from the voltage threshold, it can cause rapid ON/OFF switching when the battery voltage is close to **4.2 V**.
-
-This behavior is known as **chattering**.
-
-To improve the switching behavior, a **Relay block with hysteresis** is used.
-
-### Relay Settings
-
-* **ON Point:** 4.19 V
-* **OFF Point:** 4.20 V
-
-The difference between these two thresholds creates a **hysteresis band**, preventing the controller from repeatedly switching when the battery voltage fluctuates around the limit.
+| Parameter                  |    Value |
+| -------------------------- | -------: |
+| Initial SOC                |      20% |
+| Maximum Battery Voltage    |   4.20 V |
+| Charging Current           |     10 A |
+| Charging Current at Cutoff |      0 A |
+| Relay Switch-on Point      |   4.20 V |
+| Relay Switch-off Point     |   4.00 V |
+| Relay Output when ON       |        0 |
+| Relay Output when OFF      |       10 |
+| Approximate Cutoff Time    |    280 s |
+| Final SOC                  |    ≈ 93% |
+| Post-Cutoff Voltage        | ≈ 4.10 V |
 
 ---
 
-## 🔧 Algebraic Loop Handling
+# 🔧 Updated Relay Block Settings
 
-During development, an **algebraic loop warning** was observed in the feedback path.
+The Relay block is configured to control the charging current based on the battery terminal voltage.
 
-The issue occurred because the control signal was directly dependent on the battery measurement while the battery input was simultaneously being controlled by that feedback signal.
+Double-click the **Relay** block and use the following settings:
 
-A **Memory block** was introduced into the feedback path to provide a delayed signal and break the direct algebraic dependency.
+* **Switch-on point:** `4.20`
+* **Switch-off point:** `4.00`
+* **Output when on:** `0`
+* **Output when off:** `10`
 
-This helps Simulink solve the feedback system more reliably during simulation.
+### Why is the output `10` when OFF?
 
----
+The controlled current source arrow is pointing **upward** in the updated model.
 
-## 📊 Expected Simulation Results
+Therefore, a positive control signal of:
 
-### Battery Voltage
+**10 A**
 
-* The battery voltage gradually increases as charging continues.
-* Initially, the voltage remains below the maximum limit of **4.2 V**.
-* As the SOC increases, the battery voltage approaches the charging limit.
-* When the voltage reaches the defined threshold, the control logic changes the charging state.
+drives current into the battery in the charging direction.
 
-### Charging Current
+When the battery reaches the cutoff voltage, the relay changes its output to:
 
-* During the initial charging stage, the charging current remains approximately **10 A**.
-* As the battery voltage approaches the maximum limit, the controller responds according to the defined control logic.
-* When the voltage reaches the charging limit, the charging current is reduced or switched to **0 A**.
-* The relay hysteresis prevents rapid ON/OFF switching around the voltage threshold.
+**0 A**
 
----
-
-## 📈 Results to Include
-
-For the final GitHub version, the following simulation plots/screenshots can be added:
-
-1. **Complete Simulink Model**
-2. **Battery Voltage vs. Time**
-3. **Charging Current vs. Time**
-4. **SOC vs. Time**
-5. **Relay/Control Signal vs. Time**
+which stops the charging current.
 
 ---
 
-## 🧠 Key Learning Outcomes
+# 🔁 Relay Hysteresis
+
+The relay uses two voltage thresholds:
+
+* **Switch-on point = 4.20 V**
+* **Switch-off point = 4.00 V**
+
+This creates a **0.20 V hysteresis band**.
+
+The hysteresis prevents the controller from rapidly changing states when the battery voltage is close to the switching threshold.
+
+Without hysteresis, small numerical fluctuations in the measured battery voltage could cause repeated ON/OFF transitions, commonly referred to as **chattering**.
+
+The relay therefore provides more stable switching behavior.
+
+---
+
+# 🔧 Algebraic Loop Handling
+
+During model development, an **algebraic loop** was observed in the feedback path.
+
+The problem occurs because:
+
+```text
+Battery Voltage
+      ↓
+Controller
+      ↓
+Current Source
+      ↓
+Battery
+      ↓
+Battery Voltage
+```
+
+creates a direct dependency between the battery measurement and its input.
+
+A **Memory block** was introduced into the feedback path to provide a delayed value.
+
+This breaks the direct algebraic dependency and allows Simulink to solve the feedback system more reliably.
+
+---
+
+# 📊 Simulation Results
+
+The simulation is performed for **1500 seconds**, with the major charging event occurring at approximately **280 seconds**.
+
+The Scope displays three important signals.
+
+## 1. Battery Voltage
+
+The battery terminal voltage initially increases smoothly from approximately **3.7 V**.
+
+As charging continues:
+
+```text
+Initial Voltage
+      ↓
+Gradual Voltage Increase
+      ↓
+4.20 V Cutoff
+      ↓
+Charging Current = 0 A
+      ↓
+Voltage Settles ≈ 4.10 V
+```
+
+The voltage reaches approximately **4.20 V** at the cutoff point.
+
+After the charging current is removed, the voltage decreases slightly and settles around **4.10 V**.
+
+This demonstrates the expected transition from the charging terminal voltage to the battery's steady-state open-circuit voltage.
+
+---
+
+## 2. Charging Current
+
+The current waveform shows the charging process clearly.
+
+Initially:
+
+**Current ≈ -10 A**
+
+The negative value is caused by the reference direction of the current sensor.
+
+At approximately:
+
+**t ≈ 280 s**
+
+the battery reaches the voltage cutoff condition.
+
+The controller then switches the charging current to:
+
+**0 A**
+
+Therefore, the current waveform shows a clean transition:
+
+```text
+-10 A ─────────────────┐
+                       │
+                       │  t ≈ 280 s
+                       ▼
+  0 A  ────────────────┴────────────
+```
+
+This confirms that the controller successfully stops charging when the battery reaches the voltage limit.
+
+---
+
+## 3. State of Charge (SOC)
+
+The battery starts at:
+
+**SOC = 0.20 = 20%**
+
+During charging, SOC increases approximately linearly.
+
+At the voltage cutoff:
+
+**SOC ≈ 0.93 = 93%**
+
+After the charging current becomes zero, SOC remains approximately constant.
+
+The simulation therefore demonstrates:
+
+```text
+20% SOC
+   ↓
+Charging at 10 A
+   ↓
+SOC increases
+   ↓
+93% SOC
+   ↓
+4.20 V reached
+   ↓
+Charging stopped
+```
+
+---
+
+# 📈 Final Simulation Behavior
+
+The three Scope signals can be summarized as follows:
+
+| Signal  | Initial Condition | Charging Phase      | Cutoff                    |
+| ------- | ----------------- | ------------------- | ------------------------- |
+| Voltage | ≈ 3.7 V           | Gradually increases | 4.20 V → settles ≈ 4.10 V |
+| Current | -10 A             | ≈ -10 A             | 0 A                       |
+| SOC     | 20%               | Increases           | ≈ 93%                     |
+
+### Important Observation
+
+The charging controller successfully detects the battery voltage limit and automatically stops the charging current.
+
+The final simulation demonstrates:
+
+**Voltage:**
+3.7 V → 4.20 V → ≈ 4.10 V
+
+**Current:**
+-10 A → 0 A
+
+**SOC:**
+20% → ≈ 93%
+
+**Cutoff time:**
+≈ 280 seconds
+
+---
+
+# 🧠 Key Learning Outcomes
 
 Through this project, I gained practical experience with:
 
 * Lithium-ion battery modeling
-* EV battery charging concepts
-* CC-CV charging strategy
+* EV battery charging systems
+* Constant-current charging
+* Voltage-based charging cutoff
 * Closed-loop feedback control
 * Simscape Electrical components
-* Voltage and current sensing
+* Battery voltage and current sensing
 * Simulink-PS and PS-Simulink signal conversion
 * Relay-based hysteresis control
 * Algebraic loop handling
-* MATLAB/Simulink debugging and simulation
+* MATLAB/Simulink debugging
+* Simulation result interpretation
 
-The project helped me understand how battery charging can be implemented as a **feedback-based control problem** rather than simply applying a fixed charging current.
+The project helped me understand how battery charging can be implemented as a **feedback-control problem**, where the battery's voltage is continuously monitored and used to control the charging current.
 
 ---
 
-## 🚗 Applications
+# 🚗 Applications
 
-The concepts demonstrated in this project are applicable to:
+The concepts demonstrated in this project are relevant to:
 
 * Electric Vehicle (EV) charging systems
 * Battery Management Systems (BMS)
@@ -214,17 +431,36 @@ The concepts demonstrated in this project are applicable to:
 * DC charging infrastructure
 * Renewable energy storage systems
 
-The model can be further extended from a single battery cell to a complete EV battery pack and a more advanced charging system.
+The model can be further extended to include a complete EV battery pack, dedicated current control, temperature monitoring, SOC estimation, and advanced BMS protection functions.
 
 ---
 
-## ✅ Conclusion
+# 🔮 Future Improvements
 
-This project demonstrates the basic implementation of an **EV lithium-ion battery charging controller using MATLAB/Simulink**.
+The current model can be extended by implementing:
 
-A battery model, controlled current source, voltage and current sensors, and feedback-based relay control are combined to demonstrate the charging process.
+* True CC-CV charging with a dedicated current-control loop
+* Battery temperature monitoring
+* Over-voltage and under-voltage protection
+* Over-current protection
+* SOC estimation algorithms
+* Battery pack modeling
+* BMS integration
+* PWM-based DC-DC converter control
+* PID-based charging current control
+* Constant-voltage regulation after reaching 4.20 V
+* Charging efficiency calculation
 
-The addition of **hysteresis control** improves the stability of the switching operation near the battery voltage limit, while the Memory block helps resolve the algebraic loop in the feedback path.
+---
 
-Overall, this project provides a foundation for developing more advanced **EV charging controllers and Battery Management System (BMS)** models.
+# ✅ Conclusion
 
+This project demonstrates a **closed-loop lithium-ion EV battery charging controller using MATLAB/Simulink and Simscape Electrical**.
+
+The battery starts at **20% SOC** and is charged with approximately **10 A**. The battery voltage gradually increases until it reaches the **4.20 V cutoff voltage at approximately 280 seconds**.
+
+At the cutoff point, the relay changes the control signal so that the charging current becomes **0 A**. The battery SOC reaches approximately **93%**, while the battery voltage subsequently settles around **4.10 V**.
+
+The use of a **relay with hysteresis** provides stable voltage-based switching, while the **Memory block** helps resolve the algebraic loop in the feedback path.
+
+Overall, the project provides practical experience in **battery modeling, feedback control, Simscape Electrical, relay-based control, and MATLAB/Simulink simulation**, forming a foundation for developing more advanced EV charging and BMS systems.
