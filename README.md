@@ -1,4 +1,4 @@
-# EV Battery Charging Control (CC-CV) — MATLAB/Simulink
+# EV Battery Charging Control 
 
 ## Overview
 This project implements a **Constant Current – Constant Voltage (CC-CV) charging controller** for an EV battery cell, modeled and simulated in MATLAB/Simulink using the Simscape Electrical (Battery) library. The model simulates the electrical behavior of a lithium-ion battery cell being charged by a controlled current source, with feedback-based switching between charging modes.
@@ -38,18 +38,8 @@ The core physical circuit (battery, sensors, current source, ground, solver) is 
 
 **Known issue / next step:** The present switching logic (Relational Operator + Switch) causes rapid oscillation ("chattering") near the voltage threshold, since there's no hysteresis band. The fix in progress is to replace this with a **Relay block** (built-in hysteresis: on-point 4.19 V, off-point 4.20 V) to produce a smooth, stable CC-to-CV transition. A Memory block has been added in the feedback path to resolve an algebraic loop warning from the solver.
 
-## Planned Next Steps
-1. Complete the Relay-based hysteresis control swap.
-2. Re-verify current sensor polarity/sign.
-3. Re-run simulation and confirm a clean CC-CV voltage/current profile (flat current during CC, tapering current with voltage plateau during CV).
-4. Tune V_max, I_charge, and hysteresis band against realistic EV cell datasheet values.
-5. Add SOC vs. time plot for a complete charging picture.
 
-## Relevance to Jio-bp Application
-This project demonstrates hands-on understanding of:
-- EV battery charging behavior and CC-CV charge algorithms
-- Simscape/Simulink-based power system modeling
-- Closed-loop control design and debugging (including solver-level issues like algebraic loops)
 
----
-*Note: This README reflects the project's state as of the current working session. Update this document once the Relay-based control fix is verified and final results are captured, before adding this project to a resume.*
+
+
+
